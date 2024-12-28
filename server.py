@@ -50,6 +50,9 @@ def load_state():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r") as file:
             state = json.load(file)
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                controller.set_pixel_color(x, y, *state[y][x])
     else:
         state = [[[0, 0, 0] for _ in range(WIDTH)] for _ in range(HEIGHT)]
         hcLogo()
