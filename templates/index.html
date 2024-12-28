@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dragon863/place</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin: 0;
+                padding: 0;
+            }
+
+            .canvas {
+                display: grid;
+                grid-template-columns: repeat(64, 20px);
+                grid-template-rows: repeat(64, 20px);
+                gap: 0px;
+                margin-top: 20px;
+                background: rgba(85, 54, 54, 0.75);
+                border-style: solid;
+                border-width: 8px;
+                box-sizing: border-box;
+                border-image-repeat: stretch;
+                border-image-slice: 3;
+                border-image-width: 3;
+                border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="8" height="8" xmlns="http://www.w3.org/2000/svg"><path d="M3 1 h1 v1 h-1 z M4 1 h1 v1 h-1 z M2 2 h1 v1 h-1 z M5 2 h1 v1 h-1 z M1 3 h1 v1 h-1 z M6 3 h1 v1 h-1 z M1 4 h1 v1 h-1 z M6 4 h1 v1 h-1 z M2 5 h1 v1 h-1 z M5 5 h1 v1 h-1 z M3 6 h1 v1 h-1 z M4 6 h1 v1 h-1 z" fill="rgb(118, 118, 143)" /></svg>');
+                border-image-outset: 2;
+                box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+            }
+
+            @media (max-width: 768px) {
+                .canvas {
+                    grid-template-columns: repeat(64, 10px);
+                    grid-template-rows: repeat(64, 10px);
+                }
+
+                .pixel {
+                    width: 10px;
+                    height: 10px;
+                }
+
+                #subtitle {
+                    width: 90%;
+                }
+            }
+
+            #subtitle {
+                width: 75%;
+                text-align: center;
+            }
+
+            .pixel {
+                width: 20px;
+                height: 20px;
+                background-color: white;
+                border: 0px solid #ddd;
+                cursor: pointer;
+            }
+
+            .palette {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            #title {
+                margin-top: 20px;
+                font-size: 3em;
+            }
+
+            .press-start-2p-regular {
+                font-family: "Press Start 2P", serif;
+                font-weight: 400;
+                font-style: normal;
+            }
+
+            p,
+            label,
+            a {
+                font-family: "Roboto Mono", serif;
+                font-optical-sizing: auto;
+                font-style: normal;
+            }
+
+            h1 {
+                font-size: 3em;
+                text-align: center;
+            }
+
+            input[type="color"] {
+                width: 50px;
+                border: 0px;
+                cursor: pointer;
+            }
+
+            a {
+                color: red;
+            }
+
+            a:focus,
+            a:hover {
+                text-decoration-style: wavy;
+                text-decoration-skip-ink: none;
+            }
+        </style>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+            rel="stylesheet">
+    </head>
+
+    <body>
+        <h1 class="press-start-2p-regular">Dragon863/place</h1>
+        <p id="subtitle">
+            <a href="https://danieldb.uk">Portfolio</a> • <a href="https://">See the Hardware</a> • <a
+                href="https://github.com/Dragon863/place">GitHub</a> • <a href="https://danieldb.uk/blog/">Technical
+                info</a>
+        </p>
+        <div style="height: 30px"></div>
+        <div id="subtitle">
+            <p>Welcome! This site is designed for desktop. When you set a pixel's colour, it will be synced with a 64x64
+                LED matrix in my room. This is inspired by Reddit's r/place, with some minor changes and the addition of
+                a physical display. The hardware is based on an ESP32 using <a
+                    href="https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA">this
+                    library</a>, and anyone can set the colour of <strong>1 pixel/5 seconds/IP address</strong>! Enjoy!
+                (Note: if the canvas contents contains
+                anything inappropriate, I will have to take the service down. Please be respectful. To report the
+                current contents click <a href="/report">here</a> to report it and it will be reviewed and cleared if
+                necessary)</p>
+            </p>
+        </div>
+
+
+        <div class="palette">
+            <label for="colorPicker">Select Colour:</label>
+            <div style="width: 10px"></div>
+            <input type="color" id="colorPicker" class="color-picker" value="#ff0000">
+        </div>
+
+        <div class="canvas" id="canvas"></div>
+
+        <div style="height: 30px"></div>
+
+        <script>
+            const canvas = document.getElementById('canvas');
+            const colorPicker = document.getElementById('colorPicker');
+            let waitingForTimeout = false;
+            let selectedColor = colorPicker.value;
+
+            colorPicker.addEventListener('input', (e) => {
+                selectedColor = e.target.value;
+            });
+
+            for (let y = 0; y < 64; y++) {
+                for (let x = 0; x < 64; x++) {
+                    const pixel = document.createElement('div');
+                    pixel.classList.add('pixel');
+                    pixel.addEventListener('click', () => {
+                        console.log(`clicked ${x}, ${y}`);
+                        setPixel(x, y, selectedColor).then(response => {
+                            console.log("response", response);
+                            if (response.success) {
+                                pixel.style.backgroundColor = selectedColor;
+                                Toastify({
+                                    text: "Pixel updated!",
+                                    duration: 3000,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#b5e667"
+                                }).showToast();
+                            } else {
+                                const timeout = response.try_in;
+                                if (!waitingForTimeout) {
+                                    waitingForTimeout = true;
+                                    setTimeout(() => {
+                                        waitingForTimeout = false;
+                                        Toastify({
+                                            text: "Ready to set pixels again!",
+                                            duration: 3000,
+                                            close: true,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#b5e667"
+                                        }).showToast();
+                                    },
+                                        timeout * 1000);
+                                }
+                                Toastify({
+                                    text: "Please wait " + timeout + " seconds before trying again!",
+                                    duration: 3000,
+                                    close: true,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#eb4034"
+                                }).showToast();
+                            }
+                        })
+
+                    });
+                    canvas.appendChild(pixel);
+                }
+            }
+
+            function rgbToHex(r, g, b) {
+                // https://stackoverflow.com/a/5624139
+                // Thank you internet :)
+                return '#' + [r, g, b].map(x => {
+                    const hex = x.toString(16);
+                    return hex.length === 1 ? '0' + hex : hex;
+                }).join('');
+            }
+
+            function hexToRgb(hex) {
+                // https://stackoverflow.com/a/5624139
+                // aaaaand thanks again!
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+            }
+
+            function setPixelColor(x, y, colour) {
+                const pixel = canvas.children[y * 64 + x];
+                if (pixel) {
+                    pixel.style.backgroundColor = colour;
+                }
+            }
+
+            function loadState() {
+                const url = "http://192.168.1.140:8732/get_state";
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        for (let y = 0; y < 64; y++) {
+                            for (let x = 0; x < 64; x++) {
+                                const colour = data[y][x];
+                                setPixelColor(x, y, rgbToHex(colour[0], colour[1], colour[2]));
+                            }
+                        }
+                    });
+            }
+
+            async function setPixel(x, y, colour) {
+                const url = "http://192.168.1.140:8732/set_pixel_color";
+                const rgb = hexToRgb(colour);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        x: x,
+                        y: y,
+                        r: rgb.r,
+                        g: rgb.g,
+                        b: rgb.b
+                    })
+                });
+
+                const data = await response.json();
+                console.log(data);
+                return data;
+            }
+
+            loadState();
+            setInterval(loadState, 5000);
+        </script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    </body>
+
+</html>
