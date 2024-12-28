@@ -11,6 +11,8 @@ from openai import OpenAI
 import dotenv
 import json
 import flask_limiter
+from threading import Thread
+import time as sleep_time
 
 dotenv.load_dotenv()
 
@@ -26,9 +28,34 @@ limiter = flask_limiter.Limiter(app)
 HEIGHT = 64
 WIDTH = 64
 RATELIMIT = 5  # How often do we let one user set a pixel (in seonds)
+SAVE_INTERVAL = 60  # save state every 60 seconds, or any reasonable value
+STATE_FILE = "canvas_state.json"
 
 rate_limits = {}
 state = []
+
+
+def load_state():
+    """Load the state from a file if it exists."""
+    global state
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as file:
+            state = json.load(file)
+    else:
+        # Initialize a blank canvas
+        state = [[[0, 0, 0] for _ in range(WIDTH)] for _ in range(HEIGHT)]
+
+
+def save_state():
+    """Save the state to a file periodically."""
+    while True:
+        with open(STATE_FILE, "w") as file:
+            json.dump(state, file)
+        sleep_time.sleep(SAVE_INTERVAL)
+
+
+# Load the state on startup
+load_state()
 
 # The canvas state in memory is a 2D array of RGB stuff
 for y in range(HEIGHT):
@@ -148,4 +175,5 @@ def index():
 
 
 if __name__ == "__main__":
+    Thread(target=save_state, daemon=True).start()
     app.run(host="0.0.0.0", port=8732)
