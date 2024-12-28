@@ -121,7 +121,8 @@
         <h1 class="press-start-2p-regular">Dragon863/place</h1>
         <p id="subtitle">
             <a href="https://danieldb.uk">Portfolio</a> • <a href="https://">See the Hardware</a> • <a
-                href="https://github.com/Dragon863/place">GitHub</a> • <a href="https://danieldb.uk/blog/">Technical
+                href="https://github.com/Dragon863/place">GitHub</a> • <a
+                href="https://danieldb.uk/posts/place">Technical
                 info</a>
         </p>
         <div style="height: 30px"></div>
@@ -238,7 +239,7 @@
             }
 
             function loadState() {
-                const url = "http://192.168.1.140:8732/get_state";
+                const url = window.location.href + "get_state";
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
@@ -253,7 +254,7 @@
             }
 
             async function setPixel(x, y, colour) {
-                const url = "http://192.168.1.140:8732/set_pixel_color";
+                const url = window.location.href + "set_pixel_color";
                 const rgb = hexToRgb(colour);
 
                 const response = await fetch(url, {

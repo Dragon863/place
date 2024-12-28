@@ -1,0 +1,5 @@
+flask-limiter
+pillow
+pyserial
+openai
+python-dotenv
