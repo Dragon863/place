@@ -32,7 +32,16 @@ SAVE_INTERVAL = 60  # save state every 60 seconds, or any reasonable value
 STATE_FILE = "canvas_state.json"
 
 rate_limits = {}
-state = []
+state = []  # The canvas state in memory is a 2D array of RGB stuff
+
+
+def hcLogo():
+    newState = controller.send_image_to_esp32(
+        "/home/pi/hackclub.jpg"
+    )  # Configurable path
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            state[y][x] = newState[y][x]
 
 
 def load_state():
@@ -42,8 +51,8 @@ def load_state():
         with open(STATE_FILE, "r") as file:
             state = json.load(file)
     else:
-        # Initialize a blank canvas
         state = [[[0, 0, 0] for _ in range(WIDTH)] for _ in range(HEIGHT)]
+        hcLogo()
 
 
 def save_state():
@@ -56,24 +65,6 @@ def save_state():
 
 # Load the state on startup
 load_state()
-
-# The canvas state in memory is a 2D array of RGB stuff
-for y in range(HEIGHT):
-    state.append([])
-    for x in range(WIDTH):
-        state[y].append([0, 0, 0])
-
-
-def hcLogo():
-    newState = controller.send_image_to_esp32(
-        "/home/daniel/Pictures/hackclub.jpg"
-    )  # Configurable path
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            state[y][x] = newState[y][x]
-
-
-hcLogo()
 
 
 def classify_and_clear_canvas(path: str = "/tmp/canvas.png") -> str:
