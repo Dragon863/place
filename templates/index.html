@@ -154,7 +154,7 @@
         <script>
             const canvas = document.getElementById('canvas');
             const colorPicker = document.getElementById('colorPicker');
-            let waitingForTimeout = false;
+            let cooldownEnd = 0;
             let selectedColor = colorPicker.value;
 
             colorPicker.addEventListener('input', (e) => {
@@ -166,10 +166,23 @@
                     const pixel = document.createElement('div');
                     pixel.classList.add('pixel');
                     pixel.addEventListener('click', () => {
-                        console.log(`clicked ${x}, ${y}`);
+                        const now = Date.now();
+                        if (now < cooldownEnd) {
+                            const remaining = ((cooldownEnd - now) / 1000).toFixed(1);
+                            Toastify({
+                                text: `Please wait ${remaining} seconds before trying again!`,
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#eb4034"
+                            }).showToast();
+                            return;
+                        }
+
                         setPixel(x, y, selectedColor).then(response => {
-                            console.log("response", response);
                             if (response.success) {
+                                cooldownEnd = Date.now() + 5000;
                                 pixel.style.backgroundColor = selectedColor;
                                 Toastify({
                                     text: "Pixel updated!",
@@ -180,24 +193,9 @@
                                     backgroundColor: "#b5e667"
                                 }).showToast();
                             } else {
-                                const timeout = response.try_in;
-                                if (!waitingForTimeout) {
-                                    waitingForTimeout = true;
-                                    setTimeout(() => {
-                                        waitingForTimeout = false;
-                                        Toastify({
-                                            text: "Ready to set pixels again!",
-                                            duration: 3000,
-                                            close: true,
-                                            gravity: "top",
-                                            position: "right",
-                                            backgroundColor: "#b5e667"
-                                        }).showToast();
-                                    },
-                                        timeout * 1000);
-                                }
+                                cooldownEnd = Date.now() + response.try_in * 1000;
                                 Toastify({
-                                    text: "Please wait " + timeout + " seconds before trying again!",
+                                    text: `Please wait ${response.try_in} seconds before trying again!`,
                                     duration: 3000,
                                     close: true,
                                     gravity: "top",
@@ -205,16 +203,13 @@
                                     backgroundColor: "#eb4034"
                                 }).showToast();
                             }
-                        })
-
+                        });
                     });
                     canvas.appendChild(pixel);
                 }
             }
 
             function rgbToHex(r, g, b) {
-                // https://stackoverflow.com/a/5624139
-                // Thank you internet :)
                 return '#' + [r, g, b].map(x => {
                     const hex = x.toString(16);
                     return hex.length === 1 ? '0' + hex : hex;
@@ -222,8 +217,6 @@
             }
 
             function hexToRgb(hex) {
-                // https://stackoverflow.com/a/5624139
-                // aaaaand thanks again!
                 const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
                 return result ? {
                     r: parseInt(result[1], 16),
@@ -244,7 +237,6 @@
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
-                        console.log(data);
                         for (let y = 0; y < 64; y++) {
                             for (let x = 0; x < 64; x++) {
                                 const colour = data[y][x];
@@ -255,26 +247,16 @@
             }
 
             async function setPixel(x, y, colour) {
-                const url = window.location.href + "set_pixel_color";
+                const url = `${window.location.origin}/set_pixel_color`;
                 const rgb = hexToRgb(colour);
 
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        x: x,
-                        y: y,
-                        r: rgb.r,
-                        g: rgb.g,
-                        b: rgb.b
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ x, y, r: rgb.r, g: rgb.g, b: rgb.b })
                 });
 
-                const data = await response.json();
-                console.log(data);
-                return data;
+                return await response.json();
             }
 
             loadState();
