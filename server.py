@@ -53,6 +53,9 @@ def load_state():
     else:
         state = [[[0, 0, 0] for _ in range(WIDTH)] for _ in range(HEIGHT)]
         hcLogo()
+        for y in range(HEIGHT):
+            for x in range(WIDTH):
+                controller.set_pixel_color(x, y, *state[y][x])
 
 
 def save_state():
