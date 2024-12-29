@@ -180,4 +180,4 @@ def index():
 
 if __name__ == "__main__":
     Thread(target=save_state, daemon=True).start()
-    app.run(host="0.0.0.0", port=8732)
+    app.run(host="0.0.0.0", port=8732, debug=False)
