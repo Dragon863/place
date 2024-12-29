@@ -151,6 +151,9 @@ def report():
 @app.route("/set_pixel_color", methods=["POST"])
 @limiter.limit("1 per 1 seconds")
 def set_pixel_color():
+    if request.host != "place.danieldb.uk":
+        return jsonify({"success": False, "error": "Access denied"}), 403
+
     data = request.json
     x = data["x"]
     y = data["y"]
