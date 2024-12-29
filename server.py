@@ -27,11 +27,12 @@ CORS(app)
 limiter = flask_limiter.Limiter(
     key_func=get_remote_address,
     app=app,
+    strategy="fixed-window",
 )
 
 HEIGHT = 64
 WIDTH = 64
-RATELIMIT = 5  # How often do we let one user set a pixel (in seonds)
+RATELIMIT = 1  # How often do we let one user set a pixel (in seonds)
 SAVE_INTERVAL = 60  # save state every 60 seconds, or any reasonable value
 STATE_FILE = "canvas_state.json"
 
