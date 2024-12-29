@@ -13,6 +13,7 @@ import json
 import flask_limiter
 from threading import Thread
 import time as sleep_time
+from flask_limiter.util import get_remote_address
 
 dotenv.load_dotenv()
 
@@ -23,7 +24,10 @@ client = OpenAI(
 
 app = flask.Flask(__name__)
 CORS(app)
-limiter = flask_limiter.Limiter(app)
+limiter = flask_limiter.Limiter(
+    key_func=get_remote_address,
+    app=app,
+)
 
 HEIGHT = 64
 WIDTH = 64
@@ -33,6 +37,21 @@ STATE_FILE = "canvas_state.json"
 
 rate_limits = {}
 state = []  # The canvas state in memory is a 2D array of RGB stuff
+
+
+@app.errorhandler(429)
+def ratelimit_error(e):
+    time_left = round(limiter.current_limit.reset_at - time(), 1)
+    return (
+        jsonify(
+            {
+                "success": False,
+                "message": f"Rate limit exceeded. Try again in {time_left} seconds.",
+                "try_in": time_left,
+            }
+        ),
+        429,
+    )
 
 
 def hcLogo():
@@ -130,6 +149,7 @@ def report():
 
 
 @app.route("/set_pixel_color", methods=["POST"])
+@limiter.limit("1 per 1 seconds")
 def set_pixel_color():
     address = request.remote_addr
     if address in rate_limits:
