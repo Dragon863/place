@@ -182,7 +182,7 @@
 
                         setPixel(x, y, selectedColor).then(response => {
                             if (response.success) {
-                                cooldownEnd = Date.now() + 5000;
+                                cooldownEnd = Date.now() + 1000;
                                 pixel.style.backgroundColor = selectedColor;
                                 Toastify({
                                     text: "Pixel updated!",
