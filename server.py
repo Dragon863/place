@@ -35,7 +35,6 @@ RATELIMIT = 5  # How often do we let one user set a pixel (in seonds)
 SAVE_INTERVAL = 60  # save state every 60 seconds, or any reasonable value
 STATE_FILE = "canvas_state.json"
 
-rate_limits = {}
 state = []  # The canvas state in memory is a 2D array of RGB stuff
 
 
@@ -151,18 +150,6 @@ def report():
 @app.route("/set_pixel_color", methods=["POST"])
 @limiter.limit("1 per 1 seconds")
 def set_pixel_color():
-    address = request.remote_addr
-    if address in rate_limits:
-        if rate_limits[address] > time():
-            return (
-                jsonify(
-                    {"success": False, "try_in": round(rate_limits[address] - time())}
-                ),
-                429,
-            )
-
-    rate_limits[address] = time() + RATELIMIT
-
     data = request.json
     x = data["x"]
     y = data["y"]
