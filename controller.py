@@ -6,7 +6,10 @@ import struct
 START_MARKER = 0xFF
 PORT = "/dev/ttyUSB0"
 BAUDRATE = 115200
-DEBUG = False
+DEBUG = True
+IMAGE_PATH = (
+    "/home/daniel/Pictures/apeture2.png"  # "/home/daniel/Pictures/hackclub.jpg"
+)
 
 try:
     ser = serial.Serial(PORT, BAUDRATE, timeout=1)
@@ -21,7 +24,14 @@ time.sleep(
 )  # Wait for the serial connection to be established. SHould this be necessary? No. But it is.
 
 
-def send_image_to_esp32(image_path):
+def send_image_to_esp32(image_path=IMAGE_PATH):
+    if DEBUG:
+        toReturn = []
+        for y in range(64):
+            toReturn.append([])
+            for x in range(64):
+                toReturn[y].append([0, 0, 0])
+        return toReturn
     img = Image.open(image_path).convert("RGB")
     img = img.resize((64, 64))
 
@@ -53,10 +63,14 @@ def send_image_to_esp32(image_path):
 
 
 def clear_canvas():
+    if DEBUG:
+        return
     set_pixel_color(244, 0, 0, 0, 0)  # Magic number to clear the canvas
 
 
 def set_pixel_color(x, y, r, g, b):
+    if DEBUG:
+        return
     packet = (
         struct.pack("B", START_MARKER)
         + struct.pack("BBB", x, y, r)
@@ -67,7 +81,7 @@ def set_pixel_color(x, y, r, g, b):
 
 
 if __name__ == "__main__":
-    image_path = "/home/daniel/Pictures/hackclub.jpg"
+    image_path = IMAGE_PATH
     serial_port = "/dev/ttyUSB0"
 
     send_image_to_esp32(image_path)

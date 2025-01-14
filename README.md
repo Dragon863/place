@@ -18,3 +18,7 @@ Thinking of building this project yourself? Here's what you'll need:
 - Raspberry Pi 4 (or other model) -> [pi hut](https://thepihut.com/products/raspberry-pi-4-model-b)
 - ESP32 -> [Amazon](https://www.amazon.co.uk/s?k=esp32)
 - 64x64 LED matrix -> [AliExpress](https://www.aliexpress.com/w/wholesale-64x64-rgb-led-matrix-p3.html)
+
+## 📚 API Documentation
+
+For a full list of API endpoints, check out the [API documentation](https://place.danieldb.uk/docs).

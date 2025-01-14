@@ -20,17 +20,6 @@
                 grid-template-columns: repeat(64, 20px);
                 grid-template-rows: repeat(64, 20px);
                 gap: 0px;
-                margin-top: 20px;
-                background: rgba(85, 54, 54, 0.75);
-                border-style: solid;
-                border-width: 8px;
-                box-sizing: border-box;
-                border-image-repeat: stretch;
-                border-image-slice: 3;
-                border-image-width: 3;
-                border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="8" height="8" xmlns="http://www.w3.org/2000/svg"><path d="M3 1 h1 v1 h-1 z M4 1 h1 v1 h-1 z M2 2 h1 v1 h-1 z M5 2 h1 v1 h-1 z M1 3 h1 v1 h-1 z M6 3 h1 v1 h-1 z M1 4 h1 v1 h-1 z M6 4 h1 v1 h-1 z M2 5 h1 v1 h-1 z M5 5 h1 v1 h-1 z M3 6 h1 v1 h-1 z M4 6 h1 v1 h-1 z" fill="rgb(118, 118, 143)" /></svg>');
-                border-image-outset: 2;
-                box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
                 cursor: pointer;
             }
 
@@ -53,6 +42,7 @@
             #subtitle {
                 width: 75%;
                 text-align: center;
+                font-size: large !important;
             }
 
             .pixel {
@@ -108,6 +98,30 @@
                 text-decoration-style: wavy;
                 text-decoration-skip-ink: none;
             }
+
+            #loader {
+                position: fixed;
+                z-index: 9999;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                background-color: #C0C0C0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+
+            #loading-bar {
+                display: flex;
+                width: 40%;
+            }
+
+            .toast-close {
+                display: none;
+            }
         </style>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,11 +129,22 @@
         <link
             href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
             rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='98.css') }}">
     </head>
 
     <body>
-        <h1 class="press-start-2p-regular">Dragon863/place</h1>
-        <p id="subtitle">
+        <div id="loader">
+            <p style="font-family: 'Press Start 2P', serif; font-size: 1.2em; color: black;margin-bottom: 0px;">
+                Loading place
+            </p>
+            <p style="margin-bottom: 10px;">It's good to see you!</p>
+            <div style="height: 10px"></div>
+            <div class="progress-indicator segmented" id="loading-bar">
+                <span class="progress-indicator-bar" id="loader-progress" style="width: 0%;"></span>
+            </div>
+        </div>
+        <h1 class="press-start-2p-regular notmain" style="font-size: 3em;color:black">Dragon863/place</h1>
+        <p id="subtitle" class="notmain">
             <a href="https://danieldb.uk">Portfolio</a> • <a
                 href="https://danieldb.uk/content-res/images/hardware.jpg">See the Hardware</a> • <a
                 href="https://github.com/Dragon863/place">GitHub</a> • <a
@@ -127,12 +152,12 @@
                 info</a>
         </p>
         <div style="height: 30px"></div>
-        <div id="subtitle">
+        <div id="subtitle" class="notmain">
             <p>Welcome! This site is designed for desktop. When you set a pixel's colour, it will be synced with a 64x64
                 LED matrix in my room. This is inspired by Reddit's r/place, with some minor changes and the addition of
                 a physical display. The hardware is based on an ESP32 using <a
                     href="https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA">this
-                    library</a>, and anyone can set the colour of <strong>1 pixel/5 seconds/IP address</strong>! Enjoy!
+                    library</a>, and anyone can set the colour of <strong>1 pixel/1 seconds/IP address</strong>! Enjoy!
                 (Note: if the canvas contents contains
                 anything inappropriate, I will have to take the service down. Please be respectful. To report the
                 current contents click <a href="/report">here</a> to report it and it will be reviewed and cleared if
@@ -141,13 +166,26 @@
         </div>
 
 
-        <div class="palette">
-            <label for="colorPicker">Select Colour:</label>
+        <div class="palette notmain">
+            <label for="colorPicker">
+                <p>Select Colour:</p>
+            </label>
             <div style="width: 10px"></div>
             <input type="color" id="colorPicker" class="color-picker" value="#ff0000">
         </div>
-
-        <div class="canvas" id="canvas"></div>
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text" style="font-family: 'Roboto Mono', serif;">Main Canvas</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize" onclick="alert('easter egg?!');"></button>
+                    <button aria-label="Maximize" onclick="closeNotMain();"></button>
+                    <button aria-label="Close" onclick="window.location.href='https://danieldb.uk'"></button>
+                </div>
+            </div>
+            <div class="window-body" style="margin: 0px;">
+                <div class="canvas" id="canvas"></div>
+            </div>
+        </div>
 
         <div style="height: 30px"></div>
 
@@ -190,7 +228,7 @@
                                     close: true,
                                     gravity: "top",
                                     position: "right",
-                                    backgroundColor: "#b5e667"
+                                    backgroundColor: "#b5e667",
                                 }).showToast();
                             } else {
                                 cooldownEnd = Date.now() + response.try_in * 1000;
@@ -232,22 +270,30 @@
                 }
             }
 
-            function loadState() {
-                const url = window.location.href + "get_state";
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        for (let y = 0; y < 64; y++) {
-                            for (let x = 0; x < 64; x++) {
-                                const colour = data[y][x];
-                                setPixelColor(x, y, rgbToHex(colour[0], colour[1], colour[2]));
-                            }
-                        }
-                    });
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async function loadState() {
+                const url = window.location.href + "api/get_state";
+                const response = await fetch(url);
+                const data = await response.json();
+
+                for (let y = 0; y < 64; y++) {
+                    document.getElementById('loader-progress').style.width = `${(y / 64) * 100}%`;
+                    await sleep(10); // 1s delay to prevent blocking
+
+                    for (let x = 0; x < 64; x++) {
+                        const colour = data[y][x];
+                        setPixelColor(x, y, rgbToHex(colour[0], colour[1], colour[2]));
+                    }
+                }
+
+                document.getElementById('loader-progress').style.width = '100%';
             }
 
             async function setPixel(x, y, colour) {
-                const url = `${window.location.origin}/set_pixel_color`;
+                const url = `${window.location.origin}/api/set_pixel_color`;
                 const rgb = hexToRgb(colour);
 
                 const response = await fetch(url, {
@@ -259,7 +305,21 @@
                 return await response.json();
             }
 
-            loadState();
+            function closeNotMain() {
+                const notmain = document.getElementsByClassName('notmain');
+                for (let i = 0; i < notmain.length; i++) {
+                    if (notmain[i].style.display === 'none') {
+                        notmain[i].style.display = 'block';
+                    } else {
+                        notmain[i].style.display = 'none';
+                    }
+                }
+            }
+
+            document.getElementById('loader-progress').style.width = '0%';
+            loadState().then(() => {
+                document.getElementById('loader').style.display = 'none';
+            });
             setInterval(loadState, 5000);
         </script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>

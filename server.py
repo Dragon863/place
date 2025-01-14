@@ -19,7 +19,7 @@ dotenv.load_dotenv()
 
 client = OpenAI(
     api_key=os.getenv("OAI_KEY"),
-    base_url="https://jamsapi.hackclub.dev/openai",
+    base_url="http://5.161.100.52:3000/openai",
 )
 
 app = flask.Flask(__name__)
@@ -34,7 +34,9 @@ HEIGHT = 64
 WIDTH = 64
 RATELIMIT = 1  # How often do we let one user set a pixel (in seonds)
 SAVE_INTERVAL = 60  # save state every 60 seconds, or any reasonable value
+COUNTER = 0  # Counter for the number of times a pixel has been placed
 STATE_FILE = "canvas_state.json"
+COUNTER_FILE = "counter.json"
 
 state = []  # The canvas state in memory is a 2D array of RGB stuff
 
@@ -55,9 +57,7 @@ def ratelimit_error(e):
 
 
 def hcLogo():
-    newState = controller.send_image_to_esp32(
-        "/home/pi/hackclub.jpg"
-    )  # Configurable path
+    newState = controller.send_image_to_esp32()
     for y in range(HEIGHT):
         for x in range(WIDTH):
             state[y][x] = newState[y][x]
@@ -66,6 +66,7 @@ def hcLogo():
 def load_state():
     """Load the state from a file if it exists."""
     global state
+    global COUNTER
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r") as file:
             state = json.load(file)
@@ -79,12 +80,20 @@ def load_state():
             for x in range(WIDTH):
                 controller.set_pixel_color(x, y, *state[y][x])
 
+    if os.path.exists(COUNTER_FILE):
+        with open(COUNTER_FILE, "r") as file:
+            COUNTER = json.load(file)
+    else:
+        COUNTER = 0
+
 
 def save_state():
     """Save the state to a file periodically."""
     while True:
         with open(STATE_FILE, "w") as file:
             json.dump(state, file)
+        with open(COUNTER_FILE, "w") as file:
+            json.dump(COUNTER, file)
         sleep_time.sleep(SAVE_INTERVAL)
 
 
@@ -148,7 +157,28 @@ def report():
     return status
 
 
-@app.route("/set_pixel_color", methods=["POST"])
+@app.route("/api/get_state", methods=["GET"])
+def get_state():
+    return jsonify(state)
+
+
+@app.route("/api/get_counter", methods=["GET"])
+def get_counter():
+    return jsonify(COUNTER)
+
+
+@app.route("/api/get_individual_pixel", methods=["GET"])
+def get_individual_pixel():
+    x = int(request.args.get("x"))
+    y = int(request.args.get("y"))
+
+    if x < 0 or x >= WIDTH or y < 0 or y >= HEIGHT:
+        return jsonify({"success": False, "error": "Invalid coordinates"})
+
+    return jsonify({"success": True, "color": state[y][x]})
+
+
+@app.route("/api/set_pixel_color", methods=["POST"])
 @limiter.limit("1 per 1 seconds")
 def set_pixel_color():
     data = request.json
@@ -165,13 +195,9 @@ def set_pixel_color():
 
     controller.set_pixel_color(x, y, r, g, b)
     state[y][x] = [r, g, b]
-    print(x, y, r, g, b)
+    global COUNTER
+    COUNTER += 1
     return jsonify({"success": True})
-
-
-@app.route("/get_state", methods=["GET"])
-def get_state():
-    return jsonify(state)
 
 
 @app.route("/", methods=["GET"])
@@ -179,6 +205,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/docs", methods=["GET"])
+def documentation():
+    return render_template("docs.html")
+
+
 if __name__ == "__main__":
     Thread(target=save_state, daemon=True).start()
-    app.run(host="0.0.0.0", port=8732, debug=False)
+    app.run(host="0.0.0.0", port=8732, debug=True)

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Place - API Docs</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    </head>
+
+    <body>
+        <h1>Place - API Docs!</h1>
+        <p>
+            Welcome to the Place API! If you haven't checked out this project already, you can do so:
+        </p>
+        <ul>
+            <li>
+                On the <a href="https://place.danieldb.uk">web demo</a>...
+            </li>
+            <li>
+                Or on <a href="https://danieldb.uk/posts/place/">my blog</a>.
+            </li>
+        </ul>
+        <h2>Base URL</h2>
+        <p>The base URL for the API is <code>https://place.danieldb.uk</code>. All routes are prefixed with this
+            URL.</p>
+        <h2>Endpoints</h2>
+        <h3>> GET /api/get_state</h3>
+        <p>This route gets the canvas' current state. It does not accept any arguments. It will return a 2D array, with
+            each pixel represented as an array of the R, G and B values of the pixel. Example response:</p>
+        <pre>
+            <code>[
+    [
+        [
+            0,
+            0,
+            0
+        ],
+        ...
+    ],
+    ...
+]</code>
+        </pre>
+        <h3>> GET /api/get_individual_pixel</h3>
+        <p>This route gets the RGB values of a single pixel. It accepts two arguments as query parameters, x and y,
+            which are the coordinates of the pixel. Example request: /api/get_individual_pixel?x=0&y=0. Example
+            response:</p>
+        <pre>
+            <code>[
+    255,
+    0,
+    0
+]</code>
+        </pre>
+        <h3>> GET /api/get_counter</h3>
+        <p>This route gets the current value of how many pixels have been placed or updated on the canvas since logging
+            began. It will return with the value only. Example response:</p>
+        <pre>
+            <code>42</code>
+        </pre>
+        <h3>> POST /api/set_pixel_color</h3>
+        <p>This route sets the color of a single pixel. It accepts five arguments as JSON body: x, y, r, g and b (X
+            coordinate and Y coordinate on the canvas, red, green and blue intensity out of 255). Example responses:</p>
+        <pre>
+            <code>{"success": True}</code> or <code>{"success": False, "error": "Invalid coordinates"}</code>
+        </pre>
+        <h2>A note on Bots</h2>
+        <blockquote>
+            Unpopular opinion: I don’t think bot protection needs to be there for a project like this. I think it’s
+            interesting to see what bots can create, and it’s a fun challenge to try and outsmart them. I’ve seen some
+            really cool bots from running this project for a while, and I think it adds to the experience. That being
+            said, I do have some basic rate limiting in place to prevent abuse, but I think it’s important to strike a
+            balance between protecting the project and just seeing people have fun reverse engineering it and creating
+            cool stuff!
+        </blockquote>
+        <p>This is a quote from my <a href="https://danieldb.uk/posts/place/">post about this project</a> on my blog. I
+            beleive that a fair use of bots can be beneficial to the project, and I encourage people to experiment with
+            them. However, I do have some basic rate limiting in place to prevent abuse, and if bots are abused to
+            spread hate speech or other harmful content, I will take action to prevent that. I want to keep this project
+            a fun and creative space for everyone!
+        </p>
+    </body>
+
+</html>
